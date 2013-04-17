@@ -127,6 +127,7 @@ enum ofp_type {
     OFPT_GROUP_MOD,           /* Controller/switch message */
     OFPT_PORT_MOD,            /* Controller/switch message */
     OFPT_TABLE_MOD,           /* Controller/switch message */
+    OFPT_PROCESSOR_MOD,       /* Controller/switch message */
 
     /* Statistics messages. */
     OFPT_STATS_REQUEST,       /* Controller/switch message */
@@ -139,6 +140,9 @@ enum ofp_type {
     /* Queue Configuration messages. */
     OFPT_QUEUE_GET_CONFIG_REQUEST,  /* Controller/switch message */
     OFPT_QUEUE_GET_CONFIG_REPLY,     /* Controller/switch message */
+
+    /* Packet processor related control */
+    OFPT_PROCESSOR_CTRL,      /* Symmetric message */
 };
 
 /* Header on all OpenFlow packets. */
@@ -697,6 +701,7 @@ enum ofp_instruction_type {
     OFPIT_APPLY_ACTIONS = 4,    /* Applies the action(s) immediately */
     OFPIT_CLEAR_ACTIONS = 5,    /* Clears all actions from the datapath
                                    action set */
+    OFPIT_GOTO_PROCESSOR = 6,   /* Send packet to the given PP */
 
     OFPIT_EXPERIMENTER = 0xFFFF  /* Experimenter instruction */
 };
@@ -738,6 +743,27 @@ struct ofp_instruction_actions {
                                              OFPIT_APPLY_ACTIONS */
 };
 OFP_ASSERT(sizeof(struct ofp_instruction_actions) == 8);
+
+/* Instruction structure for OFPIT_GOTO_PROCESSOR for sending to
+ * a specific input */
+struct ofp_instruction_goto_processor {
+    uint16_t type;              /* OFPIT_PROCESSOR */
+    uint16_t len;               /* Length of this structure in bytes (16) */
+    uint32_t processor_id;      /* processor instance identifier */
+    uint32_t input_id;          /* the input og the processor */
+    uint8_t  pad[4];
+};
+OFP_ASSERT(sizeof(struct ofp_instruction_goto_processor) == 16);
+
+/* Possible shorthand instruction structure for OFPIT_GOTO_PROCESSOR
+ * for sending to the default (0) input of the processor. Type can be
+ * inferred from instruction length. */
+struct ofp_instruction_goto_prcessor_default {
+    uint16_t type;              /* OFPIT_PROCESSOR */  
+    uint16_t len;               /* Length of this struct in bytes (8). */
+    uint32_t processor_id;      /* processor instance identifier */
+};
+OFP_ASSERT(sizeof(struct ofp_instruction_goto_prcessor_default) == 8);
 
 /* Instruction structure for experimental instructions */
 struct ofp_instruction_experimenter {
@@ -849,7 +875,8 @@ enum ofp_flow_removed_reason {
     OFPRR_IDLE_TIMEOUT,         /* Flow idle time exceeded idle_timeout. */
     OFPRR_HARD_TIMEOUT,         /* Time exceeded hard_timeout. */
     OFPRR_DELETE,               /* Evicted by a DELETE flow mod. */
-    OFPRR_GROUP_DELETE          /* Group was removed. */
+    OFPRR_GROUP_DELETE,         /* Group was removed. */
+    OFPRR_PROCESSOR_REMOVED     /* Packet processor was removed */
 };
 
 /* Flow removed (datapath -> controller). */
@@ -887,6 +914,7 @@ enum ofp_error_type {
     OFPET_TABLE_MOD_FAILED,     /* Table mod request failed. */
     OFPET_QUEUE_OP_FAILED,      /* Queue operation failed. */
     OFPET_SWITCH_CONFIG_FAILED, /* Switch config request failed. */
+    FOPET_PROCESSOR_FAILED,     /* Packet processor error message */
 };
 
 /* ofp_error_msg 'code' values for OFPET_HELLO_FAILED.  'data' contains an
@@ -946,6 +974,11 @@ enum ofp_bad_instruction_code {
                                   datapath. */
     OFPBIC_UNSUP_EXP_INST,     /* Specific experimenter instruction
                                   unsupported. */
+    OFPBIC_UNKNOWN_PROCESSOR,  /* the processor instance is not known */
+    OFPBIC_UNSUP_PROCESSOR,    /* the flow or processor cannot direct packets to
+                                  the processor, due to internal constraints */
+    OFPBIC_PROCESSOR_LOOP,     /* the flow or processor would create a processor
+                                  loop which is not supported by the datapath */
 };
 
 /* ofp_error_msg 'code' values for OFPET_BAD_MATCH.  'data' contains at least
@@ -1036,6 +1069,20 @@ enum ofp_switch_config_failed_code {
     OFPSCFC_BAD_LEN              /* Specified len is invalid. */
 };
 
+enum ofp_processor_failed_code {
+    OFPPRMF_SPECIFIC     = 0, /* processor-type specific error */
+    OFPPRMF_UNKNOWN      = 1, /* The processor id is unknown */
+    OFPPRMF_UNKNOWN_TYPE = 2, /* for OFPT_PROCESSOR_MOD the requested processor type is unknown;
+                                 for OFPT_PROCESSOR_CTRL the message type is not supported */
+    OFPPRMF_FULL         = 3, /* Maximum number of supported instances reached */
+    OFPPRMF_TOTAL_FULL   = 4, /* Maximum number of total instances reached */
+    OFPPRMF_EXISTS       = 5, /* The requested processor already exits */
+    OFPPRMF_UNSUPPORTED  = 6, /* The requested processor type is not supperted, or
+                                 cannot be instantiated by the controller */
+    OFPPRMF_BAD_COMMAND  = 7, /* Unsupported or unknown command */
+    OFPPRMF_CHAINED      = 8, /* Processor not removed as a processor directs to it */
+};
+
 /* OFPT_ERROR: Error message (datapath -> controller). */
 struct ofp_error_msg {
     struct ofp_header header;
@@ -1087,6 +1134,16 @@ enum ofp_stats_types {
      * The request body is empty.
      * The reply body is struct ofp_group_desc_stats. */
     OFPST_GROUP_DESC,
+
+    /* Packet Processor statistics
+     * The request body is struct ofp_processor_stats_request
+     * The reply body is struct ofp_processor_stats_reply */
+    OFPST_PROCESSOR,
+
+    /* Packet Processor instance statistics
+     * The request body is struct ofp_processor_inst_stats_request
+     * The reply body is struct ofp_processor_inst_stats_reply */
+    OFPST_PROCESSOR_INST,
 
     /* Experimenter extension.
      * The request and reply bodies begin with a 32-bit experimenter ID,
@@ -1409,5 +1466,75 @@ struct ofp_queue_stats {
     uint64_t tx_errors;      /* Number of packets dropped due to overrun. */
 };
 OFP_ASSERT(sizeof(struct ofp_queue_stats) == 32);
+
+struct ofp_processor_mod {
+    struct ofp_header header;
+    uint32_t type;              /* A packet processor type identifier */
+    uint32_t proc_id;           /* Packet processor instance identifier */
+    uint16_t command;           /* One of OFPPRC_* */
+    uint8_t  pad[6];
+    uint8_t  data[0];
+};
+OFP_ASSERT(sizeof(struct ofp_processor_mod) == 24);
+
+enum ofp_processor_mod_command {
+    OFPPRC_ADD    = 0,  /* New packet processor instance */
+    OFPPRC_MODIFY = 1,  /* Modify an exisiting instance */
+    OFPPRC_DELETE = 2,  /* Delete a packet processor instance */
+};
+
+struct ofp_processor_ctrl {
+    struct ofp_header header;
+    uint32_t proc_id;   /* Packet processor instance identifier */
+    uint32_t type;
+    uint8_t data[0];
+};
+OFP_ASSERT(sizeof(struct ofp_processor_ctrl) == 16);
+
+struct ofp_processor_stats_request {
+    uint32_t type;      /* Packet processor type identifier */
+    uint8_t pad[4];
+};
+OFP_ASSERT(sizeof(struct ofp_processor_stats_request) == 8);
+
+struct ofp_processor_stat {
+    uint32_t type;
+    uint32_t current;       /* current number of instances */
+    uint32_t max;           /* max number of instances supported */
+    uint8_t pad[4];
+};
+OFP_ASSERT(sizeof(struct ofp_processor_stat) == 16);
+
+/* Body of ofp_stats_reply of type OFPST_PROCESSOR */
+struct ofp_processor_stats_reply {
+    uint32_t total_num;         /* total number of PP instances on datapath */
+    uint32_t total_max;         /* total number of PP instances supported */
+    struct ofp_processor_stat stats[0]; /* list of PP stat entries */
+};
+OFP_ASSERT(sizeof(struct ofp_processor_stats_reply) == 8);
+
+/* Body for ofp_stats_request of type OFPST_PROCESSOR_INST */
+struct ofp_processor_inst_stats_request {
+    uint32_t proc_id;   /* Packet processor identifier */
+    uint32_t input_id;  /* Input identifier.
+                           0xFFFFFFFF for all inputs */
+};
+OFP_ASSERT(sizeof(struct ofp_processor_inst_stats_request) == 8);
+
+/* Input struct for ofp_processor_inst_stats_reply */
+struct ofp_processor_inst_stat {
+    uint32_t proc_id;
+    uint32_t input_id;
+    uint32_t flow_count;        /* Number of flows directed to this input */
+    uint32_t processor_count;   /* Number of processors directed to this input */
+};
+OFP_ASSERT(sizeof(struct ofp_processor_inst_stat) == 16);
+
+/* Body for ofp_stats_reply of OFPST_PROCESSOR_INST */
+struct ofp_processor_inst_stats_reply {
+    struct ofp_processor_inst_stat stats[0];
+};
+OFP_ASSERT(sizeof(struct ofp_processor_inst_stats_reply) == 0);
+
 
 #endif /* openflow/openflow.h */

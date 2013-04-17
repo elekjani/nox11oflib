@@ -1,0 +1,15 @@
+{
+    "components": [
+        {
+            "name": "packetprocessor" ,
+            "library": "packetprocessor" ,
+            "dependencies": [
+                "jsondispatcher"
+            ]
+        }
+    ],
+    "test" : {
+        "asdf" : 1,
+        "qwer" : 2
+    }
+}

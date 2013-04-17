@@ -2,15 +2,15 @@ include ../../../Make.vars
 
 CONFIGURE_DEPENCIES = $(srcdir)/Makefile.am
 
-EXTRA_DIST = \
+EXTRA_DIST =\
 	meta.json
 
 pkglib_LTLIBRARIES =		\
-	switch.la	
+	topology.la
 
-switch_la_CPPFLAGS = $(AM_CPPFLAGS) -I$(top_srcdir)/src/nox -g
-switch_la_SOURCES = switch.cc
-switch_la_LDFLAGS = -module -export-dynamic
+topology_la_CPPFLAGS = $(AM_CPPFLAGS) -I$(top_srcdir)/src/nox
+topology_la_SOURCES = topology.cc
+topology_la_LDFLAGS = -module -export-dynamic
 
 NOX_RUNTIMEFILES = meta.json
 

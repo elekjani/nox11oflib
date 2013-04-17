@@ -504,7 +504,7 @@ int Openflow_connection::send_barrier_request()
 
     uint8_t *buf;
     size_t buf_len;
-    if (ofl_msg_pack((struct ofl_msg_header *)&barrier, 0/*xid*/, &buf, &buf_len, NULL/*ofl_exp*/)) {
+    if (ofl_msg_pack((struct ofl_msg_header *)&barrier, 1/*xid*/, &buf, &buf_len, NULL/*ofl_exp*/)) {
         //TODO log error;
         return -1;
     }

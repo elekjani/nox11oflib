@@ -224,7 +224,13 @@ ofl_msg_free(struct ofl_msg_header *msg, struct ofl_exp *exp) {
             return ofl_msg_free_group_mod((struct ofl_msg_group_mod *)msg, true, exp);
         }
         case OFPT_PORT_MOD:
-        case OFPT_TABLE_MOD: {
+        case OFPT_TABLE_MOD:
+        case OFPT_PROCESSOR_CTRL: {
+            return ofl_msg_free_processor_ctrl((struct ofl_msg_processor_ctrl *)msg);
+            break;
+        }
+        case OFPT_PROCESSOR_MOD: {
+            return ofl_msg_free_prcessor_mod((struct ofl_msg_processor_mod *)msg);
             break;
         }
         case OFPT_STATS_REQUEST: {
@@ -297,7 +303,21 @@ ofl_msg_free_flow_removed(struct ofl_msg_flow_removed *msg, bool with_stats, str
     return 0;
 }
 
+int
+ofl_msg_free_processor_ctrl(struct ofl_msg_processor_ctrl *msg) {
+    if(msg->data_length > 0)
+        free(msg->data);
 
+    return 0;
+}
+
+int
+ofl_msg_free_prcessor_mod(struct ofl_msg_processor_mod *msg) {
+    if(msg->data_length > 0)
+        free(msg->data);
+
+    return 0;
+}
 
 bool
 ofl_msg_merge_stats_reply_flow(struct ofl_msg_stats_reply_flow *orig, struct ofl_msg_stats_reply_flow *merge) {

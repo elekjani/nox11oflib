@@ -227,6 +227,19 @@ ofl_msg_print_table_mod(struct ofl_msg_table_mod *msg, FILE *stream) {
 }
 
 static void
+ofl_msg_print_processor_mod(struct ofl_msg_processor_mod *msg, FILE *stream) {
+    fprintf(stream, "{command=\"");
+    ofl_processor_mod_command_print(stream, msg->command);
+    fprintf(stream, ", type=%u}", msg->type);
+}
+
+static void
+ofl_msg_print_processor_ctrl(struct ofl_msg_processor_ctrl *msg, FILE *stream) {
+    fprintf(stream, "{proc_id=%u", msg->proc_id);
+    fprintf(stream, ", type=%u}", msg->type);
+}
+
+static void
 ofl_msg_print_stats_request_flow(struct ofl_msg_stats_request_flow *msg, FILE *stream, struct ofl_exp *exp) {
     fprintf(stream, ", table=\"");
     ofl_table_print(stream, msg->table_id);
@@ -267,6 +280,17 @@ ofl_msg_print_stats_request_experimenter(struct ofl_msg_stats_request_experiment
     fprintf(stream, ", exp_id=\"");
     ofl_group_print(stream, msg->experimenter_id);
     fprintf(stream, "\"");
+}
+
+static void
+ofl_msg_print_stats_request_processor(struct ofl_msg_stats_request_processor *msg, FILE *stream) {
+    fprintf(stream, ", type=\"%u\"",msg->type);
+    //TODO: get type name from packetproc/packetproc_types.h:PP_types_names
+}
+
+static void
+ofl_msg_print_stats_request_processor_inst(struct ofl_msg_stats_request_processor_inst *msg, FILE *stream) {
+    fprintf(stream, ", proc_id=\"%u\", input_id=\"%u\"", msg->proc_id, msg->input_id);
 }
 
 static void
@@ -311,6 +335,14 @@ ofl_msg_print_stats_request(struct ofl_msg_stats_request_header *msg, FILE *stre
             break;
         }
         case OFPST_GROUP_DESC: {
+            break;
+        }
+        case OFPST_PROCESSOR_INST: {
+            ofl_msg_print_stats_request_processor_inst((struct ofl_msg_stats_request_processor_inst *)msg, stream);
+            break;
+        }
+        case OFPST_PROCESSOR: {
+            ofl_msg_print_stats_request_processor((struct ofl_msg_stats_request_processor *)msg, stream);
             break;
         }
         case OFPST_EXPERIMENTER: {
@@ -424,6 +456,23 @@ ofl_msg_print_stats_reply_experimenter(struct ofl_msg_stats_reply_experimenter *
 }
 
 static void
+ofl_msg_print_stats_reply_processor(struct ofl_msg_stats_reply_processor *msg, FILE *stream) {
+    fprintf(stream, ", total_num=\"%u\", total_max=\"%u\"", msg->total_num, msg->total_max);
+    size_t i;
+    for(i=0; i<msg->stats_num; i++) {
+        ofl_structs_processor_stat_print(stream, &(msg->stats[i]));
+    }
+}
+
+static void
+ofl_msg_print_stats_reply_processor_inst(struct ofl_msg_stats_reply_processor_inst *msg, FILE *stream) {
+    size_t i;
+    for(i=0; i<msg->stats_num; i++) {
+        ofl_structs_processor_inst_stat_print(stream, &(msg->stats[i]));
+    }
+}
+
+static void
 ofl_msg_print_stats_reply(struct ofl_msg_stats_reply_header *msg, FILE *stream, struct ofl_exp *exp) {
     if (msg->type == OFPST_EXPERIMENTER) {
         if (exp != NULL && exp->stats != NULL && exp->stats->reply_to_string != NULL) {
@@ -472,6 +521,14 @@ ofl_msg_print_stats_reply(struct ofl_msg_stats_reply_header *msg, FILE *stream, 
         case OFPST_GROUP_DESC: {
             ofl_msg_print_stats_reply_group_desc((struct ofl_msg_stats_reply_group_desc *)msg, stream, exp);
             break;
+        }
+        case OFPST_PROCESSOR: {
+            ofl_msg_print_stats_reply_processor((struct ofl_msg_stats_reply_processor *)msg, stream);
+            break; 
+        }
+        case OFPST_PROCESSOR_INST: {
+            ofl_msg_print_stats_reply_processor_inst((struct ofl_msg_stats_reply_processor_inst *)msg, stream);
+            break; 
         }
         case OFPST_EXPERIMENTER: {
             ofl_msg_print_stats_reply_experimenter((struct ofl_msg_stats_reply_experimenter *)msg, stream);
@@ -555,6 +612,7 @@ ofl_msg_print(FILE *stream, struct ofl_msg_header *msg, struct ofl_exp *exp) {
         case OFPT_GROUP_MOD: { ofl_msg_print_group_mod((struct ofl_msg_group_mod *)msg, stream, exp); return; }
         case OFPT_PORT_MOD: { ofl_msg_print_port_mod((struct ofl_msg_port_mod *)msg, stream); return; }
         case OFPT_TABLE_MOD: { ofl_msg_print_table_mod((struct ofl_msg_table_mod *)msg, stream); return; }
+        case OFPT_PROCESSOR_MOD: { ofl_msg_print_processor_mod((struct ofl_msg_processor_mod *)msg, stream); return; }
 
         /* Statistics messages. */
         case OFPT_STATS_REQUEST: { ofl_msg_print_stats_request((struct ofl_msg_stats_request_header *)msg, stream, exp); return; }
@@ -567,5 +625,8 @@ ofl_msg_print(FILE *stream, struct ofl_msg_header *msg, struct ofl_exp *exp) {
         /* Queue Configuration messages. */
         case OFPT_QUEUE_GET_CONFIG_REQUEST: { ofl_msg_print_queue_get_config_request((struct ofl_msg_queue_get_config_request *)msg, stream); return; }
         case OFPT_QUEUE_GET_CONFIG_REPLY: { ofl_msg_print_queue_get_config_reply((struct ofl_msg_queue_get_config_reply *)msg, stream); return; }
+                                          
+        /* Packet processor message */
+        case OFPT_PROCESSOR_CTRL: { ofl_msg_print_processor_ctrl((struct ofl_msg_processor_ctrl *)msg, stream); return; }
     }
 }

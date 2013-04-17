@@ -132,6 +132,13 @@ ofl_structs_instruction_print(FILE *stream, struct ofl_instruction_header *inst,
         case (OFPIT_CLEAR_ACTIONS): {
             break;
         }
+        case (OFPIT_GOTO_PROCESSOR): {
+            struct ofl_instruction_goto_processor *i = (struct ofl_instruction_goto_processor *)inst;
+
+            fprintf(stream, "{processor_id=%u, input_id=%u}", i->processor_id, i->input_id);
+
+            break;
+	    }
         case (OFPIT_EXPERIMENTER): {
             if (exp == NULL || exp->inst == NULL || exp->inst->to_string == NULL) {
                 struct ofl_instruction_experimenter *i = (struct ofl_instruction_experimenter *)inst;
@@ -536,3 +543,20 @@ ofl_structs_group_desc_stats_print(FILE *stream, struct ofl_group_desc_stats *s,
 
     fprintf(stream, "]}");
 }
+
+void
+ofl_structs_processor_stat_print(FILE *stream, struct ofl_processor_stat *s) {
+    fprintf(stream, "{type=\"%u\"", s->type);  //TODO: get type from packetproc/packetproc_types.h:PP_types_names
+    fprintf(stream, ", current=\"%u\"", s->current); 
+    fprintf(stream, ", max=\"%u\"}", s->max); 
+}
+
+void
+ofl_structs_processor_inst_stat_print(FILE *stream, struct ofl_processor_inst_stat *s) {
+    fprintf(stream, "{proc_id=\"%u\"", s->proc_id); 
+    fprintf(stream, ", input_id=\"%u\"", s->input_id); 
+    fprintf(stream, ", processor_count=\"%u\"", s->processor_count); 
+    fprintf(stream, ", flow_count=\"%u\"}", s->flow_count); 
+}
+
+

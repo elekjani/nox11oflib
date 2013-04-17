@@ -2,15 +2,15 @@ include ../../../Make.vars
 
 CONFIGURE_DEPENCIES = $(srcdir)/Makefile.am
 
-EXTRA_DIST = \
+EXTRA_DIST =\
 	meta.json
 
 pkglib_LTLIBRARIES =		\
-	switch.la	
+	jsondispatcher.la
 
-switch_la_CPPFLAGS = $(AM_CPPFLAGS) -I$(top_srcdir)/src/nox -g
-switch_la_SOURCES = switch.cc
-switch_la_LDFLAGS = -module -export-dynamic
+jsondispatcher_la_CPPFLAGS = $(AM_CPPFLAGS) -I$(top_srcdir)/src/nox
+jsondispatcher_la_SOURCES = jsondispatcher.cc
+jsondispatcher_la_LDFLAGS = -module -export-dynamic
 
 NOX_RUNTIMEFILES = meta.json
 

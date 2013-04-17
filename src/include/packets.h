@@ -200,6 +200,7 @@ BOOST_STATIC_ASSERT(VLAN_ETH_HEADER_LEN == sizeof(struct vlan_eth_header));
 #define IP_TYPE_ICMP   1
 #define IP_TYPE_TCP    6
 #define IP_TYPE_UDP   17
+#define IP_TYPE_GRE   47
 #define IP_TYPE_SCTP 132
 
 #define IP_VERSION 4

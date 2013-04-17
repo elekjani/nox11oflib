@@ -128,6 +128,26 @@ ofl_table_print(FILE *stream, uint8_t table) {
     }
 }
 
+char *
+ofl_processor_mod_command_to_string(uint16_t command) {
+    char *str;
+    size_t str_size;
+    FILE *stream = open_memstream(&str, &str_size);
+
+    ofl_processor_mod_command_print(stream, command);
+    fclose(stream);
+    return str;
+}
+
+void
+ofl_processor_mod_command_print(FILE *stream, uint16_t command) {
+    switch (command) {
+        case (OFPPR_ADD):  {           fprintf(stream, "add"); return; }
+        case (OFPPR_MODIFY):  {        fprintf(stream, "mod"); return; }
+        case (OFPPR_DELETE):       {   fprintf(stream, "del"); return; }
+        default:  {                    fprintf(stream, "?(%u)", command); return; }
+    }
+}
 
 
 char *
@@ -212,7 +232,8 @@ ofl_instruction_type_to_string(uint16_t type) {
 void
 ofl_instruction_type_print(FILE *stream, uint16_t type) {
     switch (type) {
-        case OFPIT_GOTO_TABLE: {    fprintf(stream, "goto"); return; }
+        case OFPIT_GOTO_TABLE: {    fprintf(stream, "goto-table"); return; }
+        case OFPIT_GOTO_PROCESSOR: { fprintf(stream, "goto-procesor"); return; }
         case OFPIT_WRITE_METADATA: { fprintf(stream, "meta"); return; }
         case OFPIT_WRITE_ACTIONS: {  fprintf(stream, "write"); return; }
         case OFPIT_APPLY_ACTIONS: {  fprintf(stream, "apply"); return; }
@@ -449,6 +470,7 @@ ofl_message_type_print(FILE *stream, uint16_t type) {
         case OFPT_GROUP_MOD: {                fprintf(stream, "grp_mod"); return; }
         case OFPT_PORT_MOD: {                 fprintf(stream, "port_mod"); return; }
         case OFPT_TABLE_MOD: {                fprintf(stream, "tab_mod"); return; }
+        case OFPT_PROCESSOR_MOD: {            fprintf(stream, "proc_mod"); return; }
         case OFPT_STATS_REQUEST: {            fprintf(stream, "stat_req"); return; }
         case OFPT_STATS_REPLY: {              fprintf(stream, "stat_repl"); return; }
         case OFPT_BARRIER_REQUEST: {          fprintf(stream, "barr_req"); return; }
@@ -644,6 +666,8 @@ ofl_stats_type_print(FILE *stream, uint16_t type) {
         case (OFPST_QUEUE):        { fprintf(stream, "queue"); return; }
         case (OFPST_GROUP):        { fprintf(stream, "grp"); return; }
         case (OFPST_GROUP_DESC):   { fprintf(stream, "gdesc"); return; }
+        case (OFPST_PROCESSOR):    { fprintf(stream, "processor"); return; }
+        case (OFPST_PROCESSOR_INST): { fprintf(stream, "processor_inst"); return; }
         case (OFPST_EXPERIMENTER): { fprintf(stream, "exp"); return; }
         default: {                   fprintf(stream, "?(%u)", type); return; }
     }

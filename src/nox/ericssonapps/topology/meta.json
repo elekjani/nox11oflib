@@ -1,0 +1,12 @@
+{
+    "components": [
+        {
+            "name": "topology" ,
+            "library": "topology",
+            "dependencies": [
+                "discovery",
+                "jsondispatcher"
+            ]
+        }
+    ]
+}

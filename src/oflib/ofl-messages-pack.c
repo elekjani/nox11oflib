@@ -320,6 +320,43 @@ ofl_msg_pack_table_mod(struct ofl_msg_table_mod *msg, uint8_t **buf, size_t *buf
 }
 
 static int
+ofl_msg_pack_processor_mod(struct ofl_msg_processor_mod *msg, uint8_t **buf, size_t *buf_len) {
+    struct ofp_processor_mod *processor_mod;
+
+    *buf_len = (sizeof(struct ofp_processor_mod) + msg->data_length);
+    *buf     = (uint8_t *)malloc(*buf_len);
+
+    processor_mod = (struct ofp_processor_mod *)(*buf);
+    processor_mod->type    = htonl(msg->type);
+    processor_mod->proc_id = htonl(msg->proc_id);
+    processor_mod->command = htons(msg->command);
+
+    memset(processor_mod->pad, 0x00, 6);
+    if(msg->data_length != 0) {
+        memcpy(processor_mod->data, msg->data, msg->data_length);
+    }
+
+
+    return 0;
+}
+
+static int
+ofl_msg_pack_processor_ctrl(struct ofl_msg_processor_ctrl *msg, uint8_t **buf, size_t *buf_len) {
+    struct ofp_processor_ctrl *processor_ctrl;
+
+    *buf_len = (sizeof(struct ofp_processor_ctrl) + msg->data_length); 
+    *buf     = (uint8_t *)malloc(*buf_len);
+
+    processor_ctrl = (struct ofp_processor_ctrl *)(*buf);
+    processor_ctrl->type    = htonl(msg->type);
+    processor_ctrl->proc_id = htonl(msg->proc_id);
+
+    memcpy(processor_ctrl->data, msg->data, msg->data_length);
+
+    return 0;
+}
+
+static int
 ofl_msg_pack_stats_request_flow(struct ofl_msg_stats_request_flow *msg, uint8_t **buf, size_t *buf_len, struct ofl_exp *exp) {
     struct ofp_stats_request *req;
     struct ofp_flow_stats_request *stats;
@@ -399,6 +436,38 @@ ofl_msg_pack_stats_request_empty(struct ofl_msg_stats_request_header *msg UNUSED
     return 0;
 }
 
+static int
+ofl_msg_pack_stats_request_processor(struct ofl_msg_stats_request_processor *msg, uint8_t **buf, size_t *buf_len) {
+	struct ofp_stats_request *req;
+	struct ofp_processor_stats_request *stats;
+
+    *buf_len = sizeof(struct ofp_stats_request) + sizeof(struct ofp_processor_stats_request);
+    *buf 	 = (uint8_t *)malloc(*buf_len);
+
+	req = (struct ofp_stats_request *)(*buf);
+	stats = (struct ofp_processor_stats_request *)req->body;
+	stats->type = htonl(msg->type);
+	memset(stats->pad, 0x00, 4);
+
+	return 0;
+}
+
+static int
+ofl_msg_pack_stats_request_processor_inst(struct ofl_msg_stats_request_processor_inst *msg, uint8_t **buf, size_t *buf_len) {
+	struct ofp_stats_request *req;
+	struct ofp_processor_inst_stats_request *stats;
+
+    *buf_len = sizeof(struct ofp_stats_request) + sizeof(struct ofp_processor_inst_stats_request);
+    *buf 	 = (uint8_t *)malloc(*buf_len);
+
+	req = (struct ofp_stats_request *)(*buf);
+	stats = (struct ofp_processor_inst_stats_request *)req->body;
+	stats->proc_id = htonl(msg->proc_id);
+	stats->input_id = htonl(msg->input_id);
+
+	return 0;
+}
+
 
 static int
 ofl_msg_pack_stats_request(struct ofl_msg_stats_request_header *msg, uint8_t **buf, size_t *buf_len, struct ofl_exp *exp) {
@@ -433,6 +502,14 @@ ofl_msg_pack_stats_request(struct ofl_msg_stats_request_header *msg, uint8_t **b
     }
     case OFPST_GROUP_DESC: {
         error = ofl_msg_pack_stats_request_empty(msg, buf, buf_len);
+        break;
+    }
+    case OFPST_PROCESSOR: {
+        error = ofl_msg_pack_stats_request_processor((struct ofl_msg_stats_request_processor *)msg, buf, buf_len);
+        break;
+    }
+    case OFPST_PROCESSOR_INST: {
+        error = ofl_msg_pack_stats_request_processor_inst((struct ofl_msg_stats_request_processor_inst *)msg, buf, buf_len);
         break;
     }
     case OFPST_EXPERIMENTER: {
@@ -612,6 +689,47 @@ ofl_msg_pack_stats_reply_group_desc(struct ofl_msg_stats_reply_group_desc *msg, 
     return 0;
 }
 
+static int
+ofl_msg_pack_stats_reply_processor(struct ofl_msg_stats_reply_processor *msg, uint8_t **buf, size_t *buf_len){
+	struct ofp_stats_reply *rep;
+	struct ofp_processor_stats_reply *data;
+	size_t i;
+
+	*buf_len = sizeof(struct ofp_stats_reply) + msg->stats_num * sizeof(struct ofp_processor_stat) + sizeof(struct ofp_processor_stats_reply);
+	*buf = (uint8_t *)malloc(*buf_len);
+
+	rep = (struct ofp_stats_reply *)(*buf);
+	data = (struct ofp_processor_stats_reply *)rep->body;
+
+	data->total_num = htonl(msg->total_num);
+	data->total_max = htonl(msg->total_max);
+
+	for(i=0; i<msg->stats_num; i++) {
+		ofl_structs_processor_stat_pack(&(msg->stats[i]), &(data->stats[i]));
+	}
+
+	return 0;
+}
+
+static int
+ofl_msg_pack_stats_reply_processor_inst(struct ofl_msg_stats_reply_processor_inst *msg, uint8_t **buf, size_t *buf_len){
+	struct ofp_stats_reply *rep;
+	struct ofp_processor_inst_stats_reply *data;
+	size_t i;
+
+	*buf_len = sizeof(struct ofp_stats_reply);
+    *buf_len +=	msg->stats_num * sizeof(struct ofp_processor_inst_stat) + sizeof(struct ofp_processor_inst_stats_reply);
+	*buf = (uint8_t *)malloc(*buf_len);
+
+	rep = (struct ofp_stats_reply *)(*buf);
+	data = (struct ofp_processor_inst_stats_reply *)rep->body;
+
+	for(i=0; i<msg->stats_num; i++) {
+		ofl_structs_processor_inst_stat_pack(&(msg->stats[i]), &(data->stats[i]));
+	}
+
+	return 0;
+}
 
 static int
 ofl_msg_pack_stats_reply(struct ofl_msg_stats_reply_header *msg, uint8_t **buf, size_t *buf_len, struct ofl_exp *exp) {
@@ -649,6 +767,14 @@ ofl_msg_pack_stats_reply(struct ofl_msg_stats_reply_header *msg, uint8_t **buf, 
         }
         case OFPST_GROUP_DESC: {
             error = ofl_msg_pack_stats_reply_group_desc((struct ofl_msg_stats_reply_group_desc *)msg, buf, buf_len, exp);
+            break;
+        }
+        case OFPST_PROCESSOR: {
+            error = ofl_msg_pack_stats_reply_processor((struct ofl_msg_stats_reply_processor *)msg, buf, buf_len);
+            break;
+        }
+        case OFPST_PROCESSOR_INST: {
+            error = ofl_msg_pack_stats_reply_processor_inst((struct ofl_msg_stats_reply_processor_inst *)msg, buf, buf_len);
             break;
         }
         case OFPST_EXPERIMENTER: {
@@ -810,6 +936,10 @@ ofl_msg_pack(struct ofl_msg_header *msg, uint32_t xid, uint8_t **buf, size_t *bu
             error = ofl_msg_pack_table_mod((struct ofl_msg_table_mod *)msg, buf, buf_len);
             break;
         }
+        case OFPT_PROCESSOR_MOD: {
+            error = ofl_msg_pack_processor_mod((struct ofl_msg_processor_mod *)msg, buf, buf_len);
+            break;
+        }
 
         /* Statistics messages. */
         case OFPT_STATS_REQUEST: {
@@ -838,6 +968,10 @@ ofl_msg_pack(struct ofl_msg_header *msg, uint32_t xid, uint8_t **buf, size_t *bu
         }
         case OFPT_QUEUE_GET_CONFIG_REPLY: {
             error = ofl_msg_pack_queue_get_config_reply((struct ofl_msg_queue_get_config_reply *)msg, buf, buf_len);
+            break;
+        }
+        case OFPT_PROCESSOR_CTRL: {
+            error = ofl_msg_pack_processor_ctrl((struct ofl_msg_processor_ctrl *)msg, buf, buf_len);
             break;
         }
         default: {

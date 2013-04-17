@@ -77,6 +77,7 @@ EventDispatcherComponent::EventDispatcherComponent(const Context* c,
     register_event(Ofp_msg_event::get_name(OFPT_FEATURES_REPLY));
     register_event(Ofp_msg_event::get_name(OFPT_GET_CONFIG_REPLY));
     register_event(Ofp_msg_event::get_name(OFPT_PACKET_IN));
+    register_event(Ofp_msg_event::get_name(OFPT_PROCESSOR_CTRL));
     register_event(Ofp_msg_event::get_name(OFPT_FLOW_REMOVED));
     register_event(Ofp_msg_event::get_name(OFPT_PORT_STATUS));
     register_event(Ofp_msg_event::get_stats_name(OFPST_DESC));

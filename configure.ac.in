@@ -60,7 +60,7 @@ AC_PROG_DOXYGEN
 dnl Add your module here to have it grouped into a package
 
 ACI_PACKAGE([coreapps],[core application set],
-               [testharness hub switch messenger
+               [testharness hub switch messenger 
                	#add coreapps component here
 		],
                [yes])
@@ -69,10 +69,15 @@ ACI_PACKAGE([netapps],[misc network apps],
                 #add netapps component here
 		],
                [TURN_ON_NETAPPS])
+ACI_PACKAGE([ericssonapps],[ericsson applications],
+               [jsondispatcher topology packetprocessor
+        ],
+               [yes])
 
 AC_SUBST(ACTIVE_PACKAGES)
 AC_SUBST(MODULES_coreapps)               
 AC_SUBST(MODULES_netapps)               
+AC_SUBST(MODULES_ericssonapps)
 
 AM_CONDITIONAL([HAVE_NETAPPS], [test -n "$MODULES_netapps"])
 

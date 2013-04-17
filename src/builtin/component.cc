@@ -43,6 +43,11 @@ Component::~Component() {
     // return interface;
     //}
 
+int
+Component::send_openflow_barrier_request(const datapathid &datapath_id, bool block) {
+    return nox::send_openflow_barrier_request(datapath_id, block);
+}
+
 int 
 Component::send_openflow_command(const datapathid& datapath_id, 
                                  const ofp_header* oh, bool block) const {

@@ -98,6 +98,8 @@ Timer post_timer(const Callback& callback, const timeval& duration);
 void timer_debug();
 
 uint32_t allocate_openflow_xid();
+int send_openflow_barrier_request(const datapathid &datapath_id, bool block);
+
 int send_openflow_command(const datapathid&, const ofp_header* oh,
                           bool block);
 

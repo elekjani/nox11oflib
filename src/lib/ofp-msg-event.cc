@@ -36,6 +36,7 @@ Ofp_msg_event::get_name(enum ofp_type type) {
         case OFPT_PACKET_IN: { return std::string("Packet_in_event"); }
         case OFPT_BARRIER_REPLY: { return std::string("Barrier_reply_event"); }
         case OFPT_QUEUE_GET_CONFIG_REPLY: { return std::string("Queue_get_config_reply_event"); }
+        case OFPT_PROCESSOR_CTRL: { return std::string("Processor_control_event"); }
 
         case OFPT_FEATURES_REQUEST:
         case OFPT_GET_CONFIG_REQUEST:
@@ -44,6 +45,7 @@ Ofp_msg_event::get_name(enum ofp_type type) {
         case OFPT_GROUP_MOD:
         case OFPT_PORT_MOD:
         case OFPT_TABLE_MOD:
+		case OFPT_PROCESSOR_MOD:
         case OFPT_STATS_REQUEST:
         case OFPT_STATS_REPLY:
         case OFPT_BARRIER_REQUEST:

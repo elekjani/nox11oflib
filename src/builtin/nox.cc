@@ -279,6 +279,19 @@ allocate_openflow_xid()
     return xid++;
 }
 
+
+int send_openflow_barrier_request(const datapathid &datapath_id, bool block)
+{
+    co_might_yield_if(block);
+    boost::shared_ptr<Openflow_connection> oconn = dpid_to_oconn(datapath_id);
+    if (!oconn) {
+        return ESRCH;
+    }
+
+    int error = oconn->send_barrier_request();
+    return error;
+}
+
 /* Attempts to send OpenFlow command 'oh' to switch 'datapath_id'.
  *
  * Returns 0 if successful or a positive errno value.  Returns ESRCH if switch
@@ -753,6 +766,17 @@ void Handshake_fsm::register_switch() {
      * commands on switch join */
     if ( send_openflow_msg(dpid, (struct ofl_msg_header *)&mod, 0/*xid*/, false) == EAGAIN) {
           lg.err("Error, unable to clear flow table on startup");
+    }
+
+    struct ofl_msg_processor_mod proc_mod;
+    proc_mod.header.type = OFPT_PROCESSOR_MOD;
+    proc_mod.type        = 0xfffffffe; //all proc
+    proc_mod.proc_id     = 0xfffffffe; //all type
+    proc_mod.command     = OFPPRC_DELETE;
+    proc_mod.data_length = 0;
+
+    if ( send_openflow_msg(dpid, (struct ofl_msg_header *)&proc_mod, 0, false) == EAGAIN) {
+        lg.err("Error, unalbe to delete packet processor on startup");
     }
 
     lg.dbg("Registering switch with DPID = %"PRIx64"\n",dpid.as_host()); 

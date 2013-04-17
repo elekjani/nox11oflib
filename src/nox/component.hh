@@ -174,6 +174,9 @@ public:
 
     /* OpenFlow interaction methods */
 
+    int
+    send_openflow_barrier_request(const datapathid &datapath_id, bool block);
+
     int send_openflow_command(const datapathid&, const ofp_header*, 
                               bool block) const;
 

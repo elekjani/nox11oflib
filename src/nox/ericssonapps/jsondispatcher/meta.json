@@ -1,0 +1,11 @@
+{
+    "components": [
+        {
+            "name": "jsondispatcher" ,
+            "library": "jsondispatcher",
+            "dependencies": [
+                "jsonmessenger"
+            ]
+        }
+    ]
+}

@@ -11,7 +11,7 @@ SUBDIRS = oflib oflib-exp include lib builtin nox utilities tests etc
 bin_PROGRAMS = nox_core
 pkglib_LTLIBRARIES =
 
-AM_CPPFLAGS += -I$(srcdir)/nox
+AM_CPPFLAGS += -I$(srcdir)/nox -g
 
 nox_core_SOURCES = 							\
 	nox/component.hh						\

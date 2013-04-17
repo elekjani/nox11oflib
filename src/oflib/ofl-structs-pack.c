@@ -71,6 +71,9 @@ ofl_structs_instructions_ofp_len(struct ofl_instruction_header *instruction, str
             }
             return exp->inst->ofp_len(instruction);
         }
+        case OFPIT_GOTO_PROCESSOR: {
+            return sizeof(struct ofp_instruction_goto_processor);
+        }
         default:
             OFL_LOG_WARN(LOG_MODULE, "Trying to len unknown instruction type.");
             return 0;
@@ -147,6 +150,17 @@ ofl_structs_instructions_pack(struct ofl_instruction_header *src, struct ofp_ins
             memset(di->pad, 0x00, 4);
 
             return total_len;
+        }
+        case OFPIT_GOTO_PROCESSOR: {
+            struct ofl_instruction_goto_processor *si = (struct ofl_instruction_goto_processor *)src;
+            struct ofp_instruction_goto_processor  *di = (struct ofp_instruction_goto_processor *)dst;
+
+            di->len = htons(sizeof(struct ofp_instruction_goto_processor));
+            di->processor_id = htonl(si->processor_id);
+            di->input_id = htonl(si->input_id);
+            memset(di->pad, 0x00, 4);
+
+            return sizeof(struct ofp_instruction_goto_processor);
         }
         case OFPIT_EXPERIMENTER: {
             if (exp == NULL || exp->inst == NULL || exp->inst->pack == NULL) {
@@ -573,4 +587,24 @@ ofl_structs_match_pack(struct ofl_match_header *src, struct ofp_match *dst, stru
             return exp->match->pack(src, dst);
         }
     }
+}
+
+size_t
+ofl_structs_processor_stat_pack(struct ofl_processor_stat *src, struct ofp_processor_stat *dst) {
+	dst->type = htonl(src->type);
+	dst->current = htonl(src->current);
+	dst->max = htonl(src->max);
+	memset(dst->pad, 0x00, 4);
+
+	return sizeof(struct ofp_processor_stat);
+}
+
+size_t
+ofl_structs_processor_inst_stat_pack(struct ofl_processor_inst_stat *src, struct ofp_processor_inst_stat *dst) {
+	dst->proc_id = htonl(src->proc_id);
+	dst->input_id = htonl(src->input_id);
+	dst->flow_count = htonl(src->flow_count);
+	dst->processor_count = htonl(src->processor_count);
+
+	return sizeof(struct ofp_processor_inst_stat);
 }

@@ -29,7 +29,7 @@
 
 /** Provide default flags for flow_mod
  */
-uint16_t ofd_flow_mod_flags()
+inline uint16_t ofd_flow_mod_flags()
 {
   uint16_t flag = 0;
   if (SEND_FLOW_REMOVED)

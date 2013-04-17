@@ -161,6 +161,27 @@ ofl_structs_instructions_unpack(struct ofp_instruction *src, size_t *len, struct
             ilen -= sizeof(struct ofp_instruction_actions);
             break;
         }
+        case OFPIT_GOTO_PROCESSOR: {
+            struct ofp_instruction_goto_processor *si;
+            struct ofl_instruction_goto_processor *di;
+
+            if (ilen < sizeof(struct ofp_instruction_goto_processor)) {
+                OFL_LOG_WARN(LOG_MODULE, "Received GOTO_PROCESSOR instruction has invalid length (%zu).", *len);
+                return ofl_error(OFPET_BAD_ACTION, OFPBRC_BAD_LEN);
+            }
+
+            si = (struct ofp_instruction_goto_processor *)src;
+
+            di = (struct ofl_instruction_goto_processor *)malloc(sizeof(struct ofl_instruction_goto_processor));
+
+            di->processor_id = ntohl(si->processor_id);
+            di->input_id = ntohl(si->input_id);
+
+            inst = (struct ofl_instruction_header *)di;
+            ilen -= sizeof(struct ofp_instruction_goto_processor);
+            break;
+        }
+
 
         case OFPIT_EXPERIMENTER: {
             ofl_err error;
@@ -819,4 +840,37 @@ ofl_structs_match_unpack(struct ofp_match *src, size_t *len, struct ofl_match_he
             return exp->match->unpack(src, len, dst);
         }
     }
+}
+
+ofl_err
+ofl_structs_processor_stat_unpack(struct ofp_processor_stat *src, size_t *len, struct ofl_processor_stat *dst) {
+
+    if (*len < sizeof(struct ofp_processor_stat)) {
+        OFL_LOG_WARN(LOG_MODULE, "Received processor stat has invalid length (%zu).", *len);
+        return ofl_error(OFPET_BAD_REQUEST, OFPBRC_BAD_LEN);
+    }
+    *len -= sizeof(struct ofp_processor_stat);
+
+	dst->type = ntohl(src->type);
+	dst->current = ntohl(src->current);
+	dst->max = ntohl(src->max);
+
+	return 0;
+}
+
+ofl_err
+ofl_structs_processor_inst_stat_unpack(struct ofp_processor_inst_stat *src, size_t *len, struct ofl_processor_inst_stat *dst) {
+
+    if (*len < sizeof(struct ofp_processor_inst_stat)) {
+        OFL_LOG_WARN(LOG_MODULE, "Received processor stat has invalid length (%zu).", *len);
+        return ofl_error(OFPET_BAD_REQUEST, OFPBRC_BAD_LEN);
+    }
+    *len -= sizeof(struct ofp_processor_inst_stat);
+
+	dst->proc_id = ntohl(src->proc_id);
+	dst->input_id = ntohl(src->input_id);
+	dst->flow_count = ntohl(src->flow_count);
+	dst->processor_count = ntohl(src->processor_count);
+
+	return 0;
 }

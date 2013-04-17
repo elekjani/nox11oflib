@@ -69,6 +69,12 @@ void
 ofl_table_print(FILE *stream, uint8_t table);
 
 char *
+ofl_processor_mod_command_to_string(uint16_t command);
+
+void
+ofl_processor_mod_command_print(FILE *stream, uint16_t command);
+
+char *
 ofl_vlan_vid_to_string(uint32_t vid);
 
 void

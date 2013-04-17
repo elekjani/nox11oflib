@@ -305,6 +305,7 @@ int main(int argc, char *argv[])
     list<string> lib_dirs;
     lib_dirs.push_back("nox/coreapps/");
     lib_dirs.push_back("nox/netapps/");
+    lib_dirs.push_back("nox/ericssonapps/");
 
     for (;;) {
         enum {

@@ -6,11 +6,11 @@ EXTRA_DIST = \
 	meta.json
 
 pkglib_LTLIBRARIES =		\
-	switch.la	
+	packetprocessor.la	
 
-switch_la_CPPFLAGS = $(AM_CPPFLAGS) -I$(top_srcdir)/src/nox -g
-switch_la_SOURCES = switch.cc
-switch_la_LDFLAGS = -module -export-dynamic
+packetprocessor_la_CPPFLAGS = $(AM_CPPFLAGS) -I$(top_srcdir)/src/nox -g
+packetprocessor_la_SOURCES = packetprocessor.cc basePP.cc grePP.cc lldpPP.cc
+packetprocessor_la_LDFLAGS = -module -export-dynamic
 
 NOX_RUNTIMEFILES = meta.json
 
